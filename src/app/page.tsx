@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Email } from "@/lib/mock-data";
-import { Mail, Loader2, Send, Edit, RefreshCw, CheckCircle, ShieldAlert, Zap, Cpu, Activity, User, Tag } from "lucide-react";
+import { Mail, Loader2, Send, Edit, RefreshCw, CheckCircle, ShieldAlert, Zap, Cpu, Activity, User, Tag, Inbox, FileEdit, Trash2, PenBox } from "lucide-react";
+import Link from "next/link";
 
 type Analysis = {
   intent: string;
@@ -16,10 +17,12 @@ export default function InboxDashboard() {
   const [emails, setEmails] = useState<Email[]>([]);
   const [isLoadingEmails, setIsLoadingEmails] = useState(true);
 
-  const fetchEmails = async () => {
+  const [currentFolder, setCurrentFolder] = useState('Inbox');
+
+  const fetchEmails = async (folder: string = currentFolder) => {
     setIsLoadingEmails(true);
     try {
-      const res = await fetch("/api/emails");
+      const res = await fetch(`/api/emails?folder=${encodeURIComponent(folder)}`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setEmails(data);
@@ -37,8 +40,8 @@ export default function InboxDashboard() {
   };
 
   useEffect(() => {
-    fetchEmails();
-  }, []);
+    fetchEmails(currentFolder);
+  }, [currentFolder]);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   
   const [analysis, setAnalysis] = useState<Analysis>(null);
@@ -147,16 +150,50 @@ export default function InboxDashboard() {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
-      {/* Sidebar / Email List */}
-      <div className="w-1/3 bg-slate-900/40 border-r border-slate-800 backdrop-blur-xl flex flex-col z-20">
-        <div className="p-5 border-b border-slate-800/80 bg-slate-900/80 flex items-center justify-between backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg border border-blue-500/30">
-              <Zap className="w-5 h-5 text-blue-400 animate-pulse-slow" />
-            </div>
-            <h1 className="text-xl font-bold tracking-wide neon-text-blue text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">Bionic Inbox</h1>
+      {/* Navigation Sidebar */}
+      <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-30">
+        <div className="p-5 border-b border-slate-800 flex items-center gap-3">
+          <div className="p-2 bg-blue-500/20 rounded-lg border border-blue-500/30">
+            <Zap className="w-5 h-5 text-blue-400 animate-pulse-slow" />
           </div>
-          <button onClick={fetchEmails} className="hover:bg-slate-800 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-700 group" title="Refresh Inbox">
+          <h1 className="text-lg font-bold tracking-wide neon-text-blue text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">Bionic Inbox</h1>
+        </div>
+        
+        <div className="p-4">
+          <Link href="/contact" className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all">
+            <PenBox className="w-5 h-5" />
+            COMPOSE
+          </Link>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-2 flex flex-col gap-1 px-3">
+          {[
+            { name: "Inbox", icon: Inbox },
+            { name: "Sent", icon: Send },
+            { name: "Drafts", icon: FileEdit },
+            { name: "Trash", icon: Trash2 },
+          ].map((folder) => (
+            <button
+              key={folder.name}
+              onClick={() => setCurrentFolder(folder.name)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                currentFolder === folder.name 
+                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-inner" 
+                : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              }`}
+            >
+              <folder.icon className="w-5 h-5" />
+              {folder.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Email List */}
+      <div className="w-[350px] bg-slate-900/40 border-r border-slate-800 backdrop-blur-xl flex flex-col z-20">
+        <div className="p-5 border-b border-slate-800/80 bg-slate-900/80 flex items-center justify-between backdrop-blur-md">
+          <h2 className="text-lg font-semibold text-slate-200">{currentFolder}</h2>
+          <button onClick={() => fetchEmails(currentFolder)} className="hover:bg-slate-800 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-700 group" title="Refresh">
             <RefreshCw className={`w-4 h-4 text-slate-400 group-hover:text-blue-400 ${isLoadingEmails ? 'animate-spin text-blue-400' : ''}`} />
           </button>
         </div>
@@ -198,7 +235,7 @@ export default function InboxDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="w-2/3 flex flex-col h-screen relative bg-slate-950/80">
+      <div className="flex-1 flex flex-col h-screen relative bg-slate-950/80">
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[150px] -z-10 pointer-events-none"></div>

@@ -8,7 +8,22 @@ export const dynamic = 'force-dynamic';
 // Helper to disable TLS strict authorization for development/hackathon purposes if needed
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const requestedFolder = searchParams.get('folder') || 'Inbox';
+  
+  // Map UI folder names to Gmail IMAP paths
+  let imapFolder = 'INBOX';
+  switch (requestedFolder.toLowerCase()) {
+    case 'sent': imapFolder = '[Gmail]/Sent Mail'; break;
+    case 'drafts': imapFolder = '[Gmail]/Drafts'; break;
+    case 'trash': imapFolder = '[Gmail]/Trash'; break;
+    case 'spam': imapFolder = '[Gmail]/Spam'; break;
+    case 'important': imapFolder = '[Gmail]/Important'; break;
+    case 'starred': imapFolder = '[Gmail]/Starred'; break;
+    default: imapFolder = 'INBOX'; break;
+  }
+
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
 
@@ -26,7 +41,7 @@ export async function GET() {
 
   try {
     await client.connect();
-    let lock = await client.getMailboxLock('INBOX');
+    let lock = await client.getMailboxLock(imapFolder);
     
     const emails = [];
     try {
