@@ -21,9 +21,16 @@ export default function InboxDashboard() {
     try {
       const res = await fetch("/api/emails");
       const data = await res.json();
-      setEmails(data);
+      if (Array.isArray(data)) {
+        setEmails(data);
+      } else {
+        console.error("Failed to fetch emails:", data);
+        alert(data.error || "Failed to connect to Gmail.");
+        setEmails([]);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Network error:", e);
+      setEmails([]);
     } finally {
       setIsLoadingEmails(false);
     }
