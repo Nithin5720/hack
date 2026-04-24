@@ -3,6 +3,8 @@ import { ImapFlow } from "imapflow";
 import nodemailer from "nodemailer";
 import { simpleParser } from "mailparser";
 
+export const dynamic = 'force-dynamic';
+
 // Helper to disable TLS strict authorization for development/hackathon purposes if needed
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
