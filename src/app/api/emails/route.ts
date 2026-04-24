@@ -28,22 +28,24 @@ export async function GET() {
     
     const emails = [];
     try {
-      const totalMessages = client.mailbox.exists;
-      if (totalMessages > 0) {
-        // Fetch up to the last 15 emails
-        const fetchRange = `${Math.max(1, totalMessages - 14)}:*`;
-        for await (let message of client.fetch(fetchRange, { envelope: true, source: true })) {
-          if (message.source) {
-            const parsed: any = await simpleParser(message.source);
-            emails.push({
-              id: message.uid.toString(),
-              senderName: parsed.from?.value[0]?.name || parsed.from?.value[0]?.address || "Unknown",
-              senderEmail: parsed.from?.value[0]?.address || "unknown@example.com",
-              subject: parsed.subject || "No Subject",
-              body: parsed.text || "No Content",
-              date: parsed.date ? new Date(parsed.date).toISOString() : new Date().toISOString(),
-              read: message.flags.has('\\Seen'),
-            });
+      if (client.mailbox && typeof client.mailbox !== 'boolean') {
+        const totalMessages = client.mailbox.exists;
+        if (totalMessages > 0) {
+          // Fetch up to the last 15 emails
+          const fetchRange = `${Math.max(1, totalMessages - 14)}:*`;
+          for await (let message of client.fetch(fetchRange, { envelope: true, source: true })) {
+            if (message.source) {
+              const parsed: any = await simpleParser(message.source);
+              emails.push({
+                id: message.uid.toString(),
+                senderName: parsed.from?.value[0]?.name || parsed.from?.value[0]?.address || "Unknown",
+                senderEmail: parsed.from?.value[0]?.address || "unknown@example.com",
+                subject: parsed.subject || "No Subject",
+                body: parsed.text || "No Content",
+                date: parsed.date ? new Date(parsed.date).toISOString() : new Date().toISOString(),
+                read: message.flags?.has('\\Seen') || false,
+              });
+            }
           }
         }
       }
